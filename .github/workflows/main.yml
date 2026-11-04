@@ -31,26 +31,43 @@ jobs:
         run: bun install
 
       - name: Build web application
-        run: bun run build -- --base=/yoga180/ || bun run build
+        run: |
+          cd packages/web
+          bun run build
         env:
           NODE_ENV: production
           BASE_URL: /yoga180/
           PUBLIC_URL: /yoga180/
 
-      - name: Detect output folder
+      - name: Detect and patch output directory for subpaths
         id: detect
         run: |
           if [ -d "packages/web/dist" ]; then
-            echo "out_dir=packages/web/dist" >> $GITHUB_OUTPUT
+            TARGET_DIR="packages/web/dist"
           elif [ -d "packages/web/build" ]; then
-            echo "out_dir=packages/web/build" >> $GITHUB_OUTPUT
+            TARGET_DIR="packages/web/build"
           elif [ -d "packages/web/out" ]; then
-            echo "out_dir=packages/web/out" >> $GITHUB_OUTPUT
+            TARGET_DIR="packages/web/out"
           elif [ -d "dist" ]; then
-            echo "out_dir=dist" >> $GITHUB_OUTPUT
+            TARGET_DIR="dist"
           elif [ -d "build" ]; then
-            echo "out_dir=build" >> $GITHUB_OUTPUT
+            TARGET_DIR="build"
+          else
+            echo "Error: Output directory not found"
+            exit 1
           fi
+
+          echo "Target directory is: $TARGET_DIR"
+
+          # Fix absolute paths in all generated html, js, and css files
+          # Replaces href="/ with href="./ and src="/ with src="./
+          find "$TARGET_DIR" -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|href="/|href="./|g' {} +
+          find "$TARGET_DIR" -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|src="/|src="./|g' {} +
+
+          # Remove calls to the missing runable.js file so console errors stop
+          find "$TARGET_DIR" -type f -name "*.html" -exec sed -i 's|<script[^>]*runable\.js[^>]*></script>||g' {} +
+
+          echo "out_dir=$TARGET_DIR" >> $GITHUB_OUTPUT
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
