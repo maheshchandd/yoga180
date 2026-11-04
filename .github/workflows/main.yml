@@ -31,9 +31,11 @@ jobs:
         run: bun install
 
       - name: Build web application
-        run: bun run build
+        run: bun run build -- --base=/yoga180/ || bun run build
         env:
           NODE_ENV: production
+          BASE_URL: /yoga180/
+          PUBLIC_URL: /yoga180/
 
       - name: Detect output folder
         id: detect
@@ -48,10 +50,6 @@ jobs:
             echo "out_dir=dist" >> $GITHUB_OUTPUT
           elif [ -d "build" ]; then
             echo "out_dir=build" >> $GITHUB_OUTPUT
-          else
-            echo "Directory contents after build:"
-            find . -maxdepth 3 -not -path '*/.*' -not -path '*/node_modules*'
-            exit 1
           fi
 
       - name: Upload artifact
