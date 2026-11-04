@@ -22,30 +22,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Configure pnpm workspace
-        run: |
-          echo "packages:" > pnpm-workspace.yaml
-          echo "  - 'packages/*'" >> pnpm-workspace.yaml
+          bun-version: latest
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: bun install
 
       - name: Build web application
-        run: pnpm --filter @yoga180/web build || pnpm run build
+        run: bun run build
         env:
           NODE_ENV: production
 
-      - name: Locate and upload build artifact
+      - name: Determine artifact path and upload
         uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/web
+          path: |
+            packages/web/dist
+            packages/web/out
+            packages/web/build
+            dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
