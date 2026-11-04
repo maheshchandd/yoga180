@@ -22,19 +22,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: |
-          npm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build web application
-        run: |
-          npm run build --if-present
-        working-directory: packages/web
+        run: pnpm --filter @yoga180/web build || pnpm run build
         env:
           NODE_ENV: production
 
