@@ -35,14 +35,29 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Determine artifact path and upload
+      - name: Detect output folder
+        id: detect
+        run: |
+          if [ -d "packages/web/dist" ]; then
+            echo "out_dir=packages/web/dist" >> $GITHUB_OUTPUT
+          elif [ -d "packages/web/build" ]; then
+            echo "out_dir=packages/web/build" >> $GITHUB_OUTPUT
+          elif [ -d "packages/web/out" ]; then
+            echo "out_dir=packages/web/out" >> $GITHUB_OUTPUT
+          elif [ -d "dist" ]; then
+            echo "out_dir=dist" >> $GITHUB_OUTPUT
+          elif [ -d "build" ]; then
+            echo "out_dir=build" >> $GITHUB_OUTPUT
+          else
+            echo "Directory contents after build:"
+            find . -maxdepth 3 -not -path '*/.*' -not -path '*/node_modules*'
+            exit 1
+          fi
+
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: |
-            packages/web/dist
-            packages/web/out
-            packages/web/build
-            dist
+          path: ${{ steps.detect.outputs.out_dir }}
 
   deploy:
     environment:
