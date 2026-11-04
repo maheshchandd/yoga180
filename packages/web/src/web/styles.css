@@ -165,3 +165,12 @@
   .qr-print { position: fixed; inset: 0; height: 100vh; }
   .qr-print .no-print, .qr-print .no-print * { display: none !important; }
 }
+/* Hide "Made with Runable" watermark */
+a[href*="runable"],
+a:has(> div > span:empty),
+body > div#root a:has(svg + span) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
